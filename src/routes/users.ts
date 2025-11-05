@@ -6,20 +6,16 @@ import {
   createUser,
   updateUser,
   deleteUser
-} from '../services/userService';
-import { createUserSchema, updateUserSchema } from '../schemas/user';
+} from '../services/userService.js';
+import { createUserSchema, updateUserSchema } from '../schemas/user.js';
 
 const router = express.Router();
 
 // GET /users?name=&limit=
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const schema = z.object({
     name: z.string().optional(),
-    limit: z
-      .string()
-      .regex(/^
-      \d+$/)
-      .optional()
+    limit: z.string().regex(/^\d+$/).optional()
   });
 
   const parse = schema.safeParse(req.query);
@@ -28,52 +24,52 @@ router.get('/', (req, res) => {
   }
 
   const { name, limit } = parse.data;
-  const users = getAllUsers({ name, limit: limit ? parseInt(limit, 10) : undefined });
+  const users = await getAllUsers({ name, limit: limit ? parseInt(limit, 10) : undefined });
   res.json(users);
 });
 
 // GET /users/:id
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
 
-  const user = getUserById(id);
+  const user = await getUserById(id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json(user);
 });
 
 // POST /users
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.errors.map(e => e.message).join(', ') });
+    return res.status(400).json({ errors: parsed.error.errors });
   }
 
-  const created = createUser(parsed.data.name);
+  const created = await createUser(parsed.data.name);
   res.status(201).location(`/users/${created.id}`).json({ message: 'User created', user: created });
 });
 
 // PUT /users/:id
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
 
   const parsed = updateUserSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.errors.map(e => e.message).join(', ') });
+    return res.status(400).json({ errors: parsed.error.errors });
   }
 
-  const updated = updateUser(id, parsed.data.name);
+  const updated = await updateUser(id, parsed.data.name);
   if (!updated) return res.status(404).json({ error: 'User not found' });
   res.json({ message: 'User updated', user: updated });
 });
 
 // DELETE /users/:id
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
 
-  const deleted = deleteUser(id);
+  const deleted = await deleteUser(id);
   if (!deleted) return res.status(404).json({ error: 'User not found' });
   res.json({ message: 'User deleted', user: deleted });
 });
