@@ -15,8 +15,8 @@ export const swaggerSpec = swaggerJSDoc({
           type: 'object',
           properties: {
             id: { type: 'integer', example: 1 },
-            name: { type: 'string', example: 'John Doe' },
-            email: { type: 'string', example: 'john@example.com' },
+            name: { type: 'string', example: 'Arminndo Mazivila' },
+            email: { type: 'string', example: 'armindo.mazivila1990@gmail.com' },
           },
         },
       },
