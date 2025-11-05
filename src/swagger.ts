@@ -8,12 +8,19 @@ export const swaggerSpec = swaggerJSDoc({
       version: '1.0.0',
       description: 'Local API with users, persisted in SQLite'
     },
-    servers: [
-      { url: 'http://localhost:3000', description: 'Local server' }
-    ]
+    servers: [{ url: 'http://localhost:3000', description: 'Local server' }],
+    components: {
+      schemas: {
+        User: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'John Doe' },
+            email: { type: 'string', example: 'john@example.com' },
+          },
+        },
+      },
+    },
   },
-  apis: [] // We return a minimal spec directly; for large projects consider using JSDoc comments and pointing to files here
+  apis: ['./src/routes/*.ts'],
 });
-
-// You can extend swaggerSpec.paths here or generate it with annotations.
-// For brevity we show docs via swagger-ui; the endpoints are simple and documented in README and tests.
