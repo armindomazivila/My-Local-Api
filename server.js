@@ -3,114 +3,126 @@ const express = require("express");
 const cors = require("cors");
 const { Sequelize, DataTypes } = require("sequelize");
 
-// cria a aplicacao express 
+// Initialize Express app
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Inicilatliza a coneexao com o banco de dados SQLite
+// Initialize SQLite connection
 const sequelize = new Sequelize({
-    dialect: "sqlite",
-    storage: "./database.sqlite",
-    logging: false,
+  dialect: "sqlite",
+  storage: "./database.sqlite",
+  logging: false,
 });
 
-//DEfine o modelo de Usuario
-const userModel = sequelize.define("User", {
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
+// Define the User model
+const User = sequelize.define("User", {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
 
-// Sincroniza o modelo com o banco de dados
+// Sync database
 sequelize.sync().then(() => {
-    console.log("Database & tables created!");
+  console.log("✅ Database & tables created!");
 });
 
-// Rota raiz
+// Root route
 app.get("/", (req, res) => {
-    res.send(" Ola, bem vindo a minha API Local! Aqui voce pode gerenciar usuarios.");
+  res.send("👋 Welcome to My Local API! You can manage users here.");
+});
 
-})
-
-// Rota para obter todos os usuarios
+// Get all users
 app.get("/users", async (req, res) => {
-    try {
-        const users = await userModel.findAll();
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch users" });
-    }
+  try {
+    const users = await User.findAll();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
 });
 
-// Rota para criar um novo usuario
-app.post("/users", async (req, res) => {
-    try {
-        const { name } = req.body;
-        if (!name) return res.status(400).json({ error: "Name is required" });
-
-        const newUser = await userModel.create({ name });
-        res.status(201).json(newUser);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to create user" });
-    }
-});
-
-//Rota para atualizar un usuario existente
-app.put("/users/:idd", async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name } = req.body;
-
-        const user = await userModel.findByPk(id);
+// Get user by ID
+app.get("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ error: "User not found" });
-
-    user.name = name || user.name;
-    await user.save();
-
     res.json(user);
   } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
+// Create new user
+app.post("/users", async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    if (!name) return res.status(400).json({ error: "Name is required" });
+
+    const newUser = await User.create({ name, email });
+    res.status(201).json(newUser);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
+// Update user
+app.put("/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email } = req.body;
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    console.error("Error updating user:", error);
     res.status(500).json({ error: "Failed to update user" });
   }
 });
 
-
-// Rota para deleletar um ususario
+// Delete user
 app.delete("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await userModel.findByPk(id);
+    const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     await user.destroy();
-    res.json({ message: "✅ User deleted successfully" });
+    res.json({ message: "User deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete user" });
   }
 });
 
-// Rota 404 para rotas nao encontradas
+// 404 Route
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-// Inicia o servidor
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
-
-//Testa a conexao com o banco de dados
-async function testDBConnection() {
-    try {
-        await sequelize.authenticate();
-        console.log("Connecting to the database has been esabled successfully.");
-
-    } catch (error) {
-        console.error("Unable to connect to the database:", error);
-
-    }
-}
-testDBConnection(); 
+// Test DB connection
+(async function testDBConnection() {
+  try {
+    await sequelize.authenticate();
+    console.log("Connected to the database successfully.");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
+})();
