@@ -7,6 +7,7 @@ const { Sequelize, DataTypes } = require("sequelize");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
 // Initialize SQLite connection
 const sequelize = new Sequelize({
@@ -28,14 +29,19 @@ const User = sequelize.define("User", {
 });
 
 // Sync database
-sequelize.sync().then(() => {
-  console.log("✅ Database & tables created!");
+sequelize.sync({ alter: true }).then(() => {
+  console.log("✅ Database & tables created (with schema sync)!");
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
 });
+  
 
 // Root route
 app.get("/", (req, res) => {
   res.send("👋 Welcome to My Local API! You can manage users here.");
 });
+
 
 // Get all users
 app.get("/users", async (req, res) => {

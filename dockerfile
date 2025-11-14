@@ -1,24 +1,32 @@
-# Use official Node.js image
+# Use official Node image
 FROM node:18
 
 # Create app directory
 WORKDIR /usr/src/app
 
-# Copy package files first (for caching)
+# Install system dependencies for building sqlite3
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    sqlite3 \
+    libsqlite3-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy package files first (better caching)
 COPY package*.json ./
 
-# Install build tools (required to compile sqlite3)
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
-
-# Install dependencies and rebuild sqlite3
+# Install Node dependencies
 RUN npm install
+
+# Rebuild sqlite3 for Linux platform
 RUN npm rebuild sqlite3 --build-from-source
 
-# Copy the rest of the code
+# Copy remaining source files
 COPY . .
 
-# Expose port
+# Expose your app port (if you use 3000)
 EXPOSE 3000
 
-# Start the server
-CMD ["node", "server.js"]
+# Start the app
+CMD ["npm", "start"]

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Local API Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      margin-bottom: 1rem;
+    }
+    input, button {
+      padding: 8px;
+      margin: 4px;
+    }
+    button {
+      cursor: pointer;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: white;
+      padding: 8px;
+      margin-bottom: 6px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 My Local API Users</h1>
+
+  <form id="addUserForm">
+    <input type="text" id="username" placeholder="Enter user name" required />
+    <button type="submit">Add User</button>
+  </form>
+
+  <ul id="userList"></ul>
+
+  <script>
+    const API_URL = "http://localhost:3000/users";
+
+    async function loadUsers() {
+      const res = await fetch(API_URL);
+      const users = await res.json();
+      const list = document.getElementById("userList");
+      list.innerHTML = "";
+      users.forEach(u => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span>${u.name}</span>
+          <div>
+            <button onclick="editUser(${u.id}, '${u.name}')">✏️</button>
+            <button onclick="deleteUser(${u.id})">🗑️</button>
+          </div>`;
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById("addUserForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = document.getElementById("username").value.trim();
+      if (!name) return alert("Enter a name!");
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      });
+      document.getElementById("username").value = "";
+      loadUsers();
+    });
+
+    async function deleteUser(id) {
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      loadUsers();
+    }
+
+    async function editUser(id, oldName) {
+      const newName = prompt("Edit user name:", oldName);
+      if (!newName) return;
+      await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName })
+      });
+      loadUsers();
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
